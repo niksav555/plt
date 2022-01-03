@@ -20,6 +20,10 @@ def readFile(log_file_name, sample_rate):
                 check_sample = re.search(r'one', line)
                 if not check_sample:
                     continue
+                if choise_flag == "tps":
+                    check_sample_rps = re.search(r'RPS', line)
+                    if not check_sample_rps:
+                        raise Exception("expected tps data, but not found")
                 if sample_rate == 0 or i % sample_rate == 0:
                     immediate_slice = line.split()
                     log.debug(immediate_slice)
@@ -73,15 +77,18 @@ def parseRPSlist(rps_list):
 if __name__ == '__main__':
     log.basicConfig(level=log.INFO)
     log_file_name = argv[1]
-    sample_rate = int(argv[2])
-    choise_flag = argv[3]
+    title_name = argv[2]
+    sample_rate = int(argv[3])
+    choise_flag = argv[4]
+    
     latency_list, time_list, rps_list = readFile(log_file_name, sample_rate)
+    plt.style.use('dark_background')
     if not latency_list or not time_list:
         log.error("reading of log file returned emply list. Please, check file name")
         sys.exit(1)
     if choise_flag == "latency":
         result_parse_latency_list =  parseLatencyList(latency_list)
-        plt.title(log_file_name)
+        plt.title(title_name)
         plt.plot(time_list, result_parse_latency_list[0], label='min latency')
         plt.plot(time_list, result_parse_latency_list[1], label='max latency')
         plt.plot(time_list, result_parse_latency_list[2], label='median latency')
@@ -92,7 +99,7 @@ if __name__ == '__main__':
         plt.show()
     elif choise_flag == "tps":
         result_parse_rps_list =  parseRPSlist(rps_list)
-        plt.title(log_file_name)
+        plt.title(title_name)
         plt.plot(time_list, result_parse_rps_list, label='rps')
         plt.xlabel('time')
         plt.ylabel('tps, request per seconds')
